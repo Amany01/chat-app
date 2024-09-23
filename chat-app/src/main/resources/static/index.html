@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-width: 400px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+        #messageInput {
+            width: calc(100% - 90px);
+            padding: 5px;
+        }
+        #sendButton {
+            padding: 6px 10px;
+        }
+    </style>
+</head>
+<body>
+<h2>WebSocket Chat</h2>
+<div id="messages"></div>
+<input type="text" id="messageInput" placeholder="Type a message..." />
+<button id="sendButton">Send</button>
+
+<script>
+    const socket = new WebSocket("ws://localhost:8080/websocket");
+
+    socket.onopen = function(event) {
+        console.log("WebSocket connection established.");
+    };
+
+    socket.onmessage = function(event) {
+        const messageData = JSON.parse(event.data);
+        const messagesDiv = document.getElementById("messages");
+        messagesDiv.innerHTML += `<div><strong>${messageData.sender}:</strong> ${messageData.message}</div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll
+    };
+
+    socket.onerror = function(error) {
+        console.error("WebSocket error: ", error);
+    };
+
+    socket.onclose = function(event) {
+        console.log("WebSocket connection closed:", event);
+    };
+
+    document.getElementById("sendButton").onclick = function() {
+        const messageInput = document.getElementById("messageInput");
+        const message = messageInput.value;
+        if (message) {
+            sendMessage({ sender: "Client", message: message });
+            messageInput.value = ""; // Clear input field
+        } else {
+            console.error("Message cannot be empty.");
+        }
+    };
+
+    function sendMessage(message) {
+        if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(message));
+        } else {
+            console.error("WebSocket connection is not open.");
+        }
+    }
+</script>
+</body>
+</html>
+
